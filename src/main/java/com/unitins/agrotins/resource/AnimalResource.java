@@ -1,8 +1,8 @@
 package com.unitins.agrotins.resource;
 
 import com.unitins.agrotins.models.Animal;
-import com.unitins.agrotins.models.Pesagem;
-import jakarta.transaction.Transactional;
+import com.unitins.agrotins.service.AnimalService;
+import jakarta.inject.Inject;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
@@ -12,53 +12,51 @@ import java.util.List;
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 public class AnimalResource {
+
+    @Inject
+    AnimalService animalService;
+
     @POST
-    @Transactional
     public Response cadastrar(Animal animal) {
-        animal.persist();
-        return Response.ok(animal).status(201).build();
+        Animal novoAnimal = animalService.cadastrar(animal);
+        return Response.ok(novoAnimal).status(201).build();
     }
 
     @GET
     public List<Animal> listar() {
-        return Animal.listAll();
+        return animalService.listar();
     }
 
     @GET
     @Path("/{tagRFID}")
-    public Animal buscarPorTag(@PathParam("tagRFID") String tagRFID) {
-        return Animal.findById(tagRFID);
+    public Response buscarPorTag(@PathParam("tagRFID") String tagRFID) {
+        try {
+            Animal animal = animalService.buscarPorTag(tagRFID);
+            return Response.ok(animal).build();
+        } catch (NotFoundException e) {
+            return Response.status(404).entity(e.getMessage()).build();
+        }
     }
 
     @PUT
     @Path("/{tagRFID}")
-    @Transactional
     public Response atualizarAnimal(@PathParam("tagRFID") String tagRFID, Animal animalAtualizado) {
-        Animal animal = Animal.findById(tagRFID);
-        if (animal == null) {
-            return Response.status(404).entity("Animal não encontrado").build();
+        try {
+            Animal animal = animalService.atualizar(tagRFID, animalAtualizado);
+            return Response.ok(animal).build();
+        } catch (NotFoundException e) {
+            return Response.status(404).entity(e.getMessage()).build();
         }
-
-        animal.nome = animalAtualizado.nome;
-        animal.raca = animalAtualizado.raca;
-        animal.dataNascimento = animalAtualizado.dataNascimento;
-
-        return Response.ok(animal).build();
     }
 
     @DELETE
-    @Path("/{tagRFID}")
-    @Transactional
-    public Response deletarAnimal(@PathParam("tagRFID") String tagRFID) {
-        Animal animal = Animal.findById(tagRFID);
-        if (animal == null) {
-            return Response.status(404).entity("Animal não encontrado").build();
+    @Path("/{id}")
+    public Response deletarAnimal(@PathParam("id") String tagRFID) {
+        try {
+            animalService.deletar(tagRFID);
+            return Response.noContent().build();
+        } catch (NotFoundException e) {
+            return Response.status(404).entity(e.getMessage()).build();
         }
-
-        // Primeiro deleta as pesagens associadas
-        Pesagem.delete("tagRFID", tagRFID);
-        animal.delete();
-
-        return Response.noContent().build();
     }
 }

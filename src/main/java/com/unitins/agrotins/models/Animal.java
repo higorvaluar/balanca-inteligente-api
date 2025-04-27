@@ -2,6 +2,7 @@ package com.unitins.agrotins.models;
 
 import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
 import jakarta.persistence.*;
+import java.time.LocalDate;
 
 @Entity
 public class Animal extends PanacheEntityBase {
@@ -10,5 +11,5 @@ public class Animal extends PanacheEntityBase {
 
     public String nome;
     public String raca;
-    public String dataNascimento;
+    public LocalDate dataNascimento;
 }
